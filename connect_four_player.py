@@ -5,8 +5,12 @@ from connect_four_board import ConnectFourBoard
 
 class ConnectFourPlayer:
     """base class for Connect Four players"""
-    def __init__(self):
+    def __init__(self, name: str = 'Connect Four Player'):
         self.moves_made = []
+        self.name = name
+
+    def __str__(self):
+        return self.name
 
     def choose_move(self, board: ConnectFourBoard) -> int:
         """makes the first legal move lexically

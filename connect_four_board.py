@@ -11,11 +11,12 @@ class ConnectFourBoard:
      - vertical dimension
      - winning line length
      instance variables for:
-     - starting player (Red or Yellow)
-     - current turn (Red or Yellow)
+     - starting player (Red [-1] or Yellow [+1])
+     - current turn (Red [-1] or Yellow [+1])
      - piece layout (nested numpy array of ints, -1 for Red checkers, +1 for Yellow checkers, 0 for empty)
      and methods for:
      - playing a checker of the appropriate color for the current turn
+     - switching the current player (for use after a move has been made successfully)
      - checking if a player has won
      - checking if a stalemate has occurred
      - representing the board as a string
@@ -37,6 +38,7 @@ class ConnectFourBoard:
         """
         self.starting_player = starting_player
         self.current_player = current_player
+        self.is_end_state = False
         if board is not None:
             # check type of board
             if not isinstance(board, np.ndarray) or board.dtype != np.int8:
@@ -66,6 +68,9 @@ class ConnectFourBoard:
         elif self.starting_player == 1 and self.current_player != self.starting_player and balance != 1:
             raise Exception('Invalid board: Should be exactly one extra Yellow checker')
 
+        # check for end state
+        self.is_end_state = self.check_winner(-1) or self.check_winner(1) or self.check_stalemate()
+
     def __str__(self) -> str:
         """String representation of ConnectFourBoard"""
         my_str = ""
@@ -73,10 +78,11 @@ class ConnectFourBoard:
             my_str += "First to play: Red\n"
         else:
             my_str += "First to play: Yellow\n"
-        if self.current_player < 0:
-            my_str += "Currently playing: Red\n"
-        else:
-            my_str += "Currently playing: Yellow\n"
+        if not self.is_end_state:
+            if self.current_player < 0:
+                my_str += "Currently playing: Red\n"
+            else:
+                my_str += "Currently playing: Yellow\n"
         flipped = np.flip(self.board,1)
         color_dict = {-1: "R", 0: "-", 1: "Y"}
         for v in range(ConnectFourBoard.V_DIM):
@@ -103,6 +109,7 @@ class ConnectFourBoard:
                         length += 1
                         new_v_pos += 1
                     if length == self.WINNING_LINE_LENGTH:
+                        self.is_end_state = True
                         return True
                     # check horizontal wins
                     length = 1
@@ -112,6 +119,7 @@ class ConnectFourBoard:
                         length += 1
                         new_h_pos += 1
                     if length == self.WINNING_LINE_LENGTH:
+                        self.is_end_state = True
                         return True
                     # check upward diagonal wins
                     length = 1
@@ -123,6 +131,7 @@ class ConnectFourBoard:
                         new_v_pos += 1
                         new_h_pos += 1
                     if length == self.WINNING_LINE_LENGTH:
+                        self.is_end_state = True
                         return True
                     # check downward diagonal wins
                     length = 1
@@ -134,6 +143,7 @@ class ConnectFourBoard:
                         new_v_pos -= 1
                         new_h_pos += 1
                     if length == self.WINNING_LINE_LENGTH:
+                        self.is_end_state = True
                         return True
         return False
 
@@ -143,16 +153,20 @@ class ConnectFourBoard:
         """
         total_checkers = int(np.sum(np.abs(self.board)))
         if total_checkers == self.H_DIM * self.V_DIM:
+            self.is_end_state = True
             return True # a stalemate occurs when the board is full, with no winner
         return False
 
     def play_checker(self, col: int) -> Tuple[int, int]:
         """Plays a checker of the current player's color on the board
         :param col: the column to place the checker in
+        :raises ValueError: if board is already at an end state
         :raises ValueError: if col is not within [1,H_DIM]
         :raises ValueError: if col is already full
         :return (col,height): the location of the newly placed checker
         """
+        if self.is_end_state:
+            raise ValueError("Cannot play checker on an end state board")
         if col < 1 or col > ConnectFourBoard.H_DIM:
             raise ValueError("col must be in range [1, H_DIM]")
         height_to_place = 0
@@ -162,3 +176,7 @@ class ConnectFourBoard:
             raise ValueError("col must not be full")
         self.board[col-1][height_to_place] = np.sign(self.current_player)
         return col, height_to_place
+
+    def switch_current_player(self):
+        """Switches the current player to the other player"""
+        self.current_player *= -1
