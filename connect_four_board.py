@@ -1,24 +1,25 @@
 # Rick Dionne
 # August 2025
-"""Connect Four board class with class constants for:
- - horizontal dimension
- - vertical dimension
- - winning line length
- instance variables for:
- - starting player (Red or Yellow)
- - current turn (Red or Yellow)
- - piece layout (nested array of ints, -1 for Red checkers, +1 for Yellow checkers, 0 for empty)
- and methods for:
- - playing a checker of the appropriate color for the current turn
- - checking if a player has won
- - checking if a stalemate has occurred
- - representing the board as a string
-"""
+
 import numpy as np
 from numpy.typing import NDArray
-
+from typing import Tuple
 
 class ConnectFourBoard:
+    """Connect Four board class with class constants for:
+     - horizontal dimension
+     - vertical dimension
+     - winning line length
+     instance variables for:
+     - starting player (Red or Yellow)
+     - current turn (Red or Yellow)
+     - piece layout (nested numpy array of ints, -1 for Red checkers, +1 for Yellow checkers, 0 for empty)
+     and methods for:
+     - playing a checker of the appropriate color for the current turn
+     - checking if a player has won
+     - checking if a stalemate has occurred
+     - representing the board as a string
+    """
     # standard Connect Four dimensions
     H_DIM = 7
     V_DIM = 6
@@ -145,11 +146,12 @@ class ConnectFourBoard:
             return True # a stalemate occurs when the board is full, with no winner
         return False
 
-    def play_checker(self, col: int) -> None:
+    def play_checker(self, col: int) -> Tuple[int, int]:
         """Plays a checker of the current player's color on the board
         :param col: the column to place the checker in
         :raises ValueError: if col is not within [1,H_DIM]
         :raises ValueError: if col is already full
+        :return (col,height): the location of the newly placed checker
         """
         if col < 1 or col > ConnectFourBoard.H_DIM:
             raise ValueError("col must be in range [1, H_DIM]")
@@ -159,3 +161,4 @@ class ConnectFourBoard:
         if height_to_place >= ConnectFourBoard.V_DIM:
             raise ValueError("col must not be full")
         self.board[col-1][height_to_place] = np.sign(self.current_player)
+        return col, height_to_place
